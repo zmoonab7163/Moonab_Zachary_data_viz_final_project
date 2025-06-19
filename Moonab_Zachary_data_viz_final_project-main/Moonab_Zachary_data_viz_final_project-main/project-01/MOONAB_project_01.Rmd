@@ -1,0 +1,82 @@
+---
+title: "Mini-Project 01"
+author: "Zachary Moonab zmoonab7163@floridapoly.edu"
+output: 
+  html_document:
+    keep_md: true
+    toc: true
+    toc_float: true
+---
+
+# Data Visualization Project 01
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+```{r}
+fuel <- read.csv("https://raw.githubusercontent.com/aalhamadani/datasets/main/fuel.csv")
+str(fuel)
+```
+
+# Bar Chart: Average MPG by Vehicle Class
+```{r}
+fuel %>%
+  group_by(class) %>%
+  summarize(avg_mpg = mean(combined_mpg_ft1)) %>%
+  ggplot(aes(x = reorder(class, -avg_mpg), y = avg_mpg, fill = avg_mpg)) +
+  geom_col(width = 0.7) +
+  scale_fill_gradient2(low = "red", mid = "yellow", high = "green", midpoint = mean(fuel$combined_mpg_ft1)) +
+  labs(title = "Fuel Efficiency by Vehicle Class",
+       x = "Vehicle Class",
+       y = "Average MPG") +
+  theme_classic() +
+  coord_flip()
+```
+
+# Scatter Plot: Engine Displacement vs. Average MPG
+``` {r}
+ggplot(fuel, aes(x = engine_displacement, y = combined_mpg_ft1, color = fuel_type)) +
+  geom_point() +
+  labs(title = "Engine Size vs. Fuel Efficiency",
+       x = "Engine Displacement (L)",
+       y = "Combined MPG") +
+  theme_bw()
+```
+
+# Line Plot: MPG Over Time 
+``` {r}
+fuel %>%
+  group_by(year) %>%
+  summarize(avg_mpg = mean(combined_mpg_ft1)) %>%
+  ggplot(aes(x = year, y = avg_mpg)) +
+  geom_line(color = "blue") +
+  geom_point(color = "darkblue") +
+  labs(title = "Fuel Efficiency Over Time (1984-2017)",
+       x = "Model Year",
+       y = "MPG") +
+  scale_x_continuous(breaks = seq(min(fuel$year), max(fuel$year), by = 5)) +
+  theme_bw()
+
+```
+
+# Bar Chart: MPG Versus Types of Transmissions
+``` {r}
+fuel %>%
+  group_by(transmission) %>%
+  summarize(avg_mpg = mean(combined_mpg_ft1)) %>%
+  arrange(desc(avg_mpg)) %>%              
+  slice(-c(1)) %>%                            
+  filter(avg_mpg != max(avg_mpg),               
+         avg_mpg != min(avg_mpg)) %>%           
+  ggplot(aes(x = reorder(transmission, -avg_mpg), y = avg_mpg, fill = avg_mpg)) +
+  geom_col(width = 0.7) +
+  scale_fill_gradient2(low = "red", mid = "yellow", high = "green",
+                       midpoint = mean(fuel$combined_mpg_ft1)) +
+  labs(title = "MPG by Transmission Type",
+       x = "Transmission Type",
+       y = "Average MPG") +
+  theme_minimal() +
+  coord_flip() 
+
+```

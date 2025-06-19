@@ -1,0 +1,88 @@
+---
+title: "Mini-Project 02"
+author: "Zachary Moonab"
+date: "06-10-2025"
+output: 
+  html_document:
+    keep_md: true
+    toc: true
+    toc_float: true
+---
+
+# Data Visualization Project 02
+
+### Part A
+
+```{r}
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(plotly)
+getwd()
+library(here)
+florida_lakes <- read_sf(here("data", "Florida_Lakes.shp"))
+baby_names <- readRDS(here("data", "babynames.rds"))
+births <- read_sf(here("data", "us_births_00_14.csv"))
+str(baby_names)
+head(baby_names)
+```
+
+``` {r}
+ggplot(florida_lakes) +
+  geom_sf(fill = "blue", color = "darkblue") +
+  theme_bw() +
+  labs(title = "Map of Florida Lakes")
+```
+
+### Part B
+
+``` {r}
+selected_names <- c("Jared", "Zachary", "Matthew", "Brandon", "Alexander", "Walter" )
+plot_data <- baby_names %>%
+  filter(name %in% selected_names)
+p <- plot_ly()
+for (name in selected_names) {
+  name_data <- plot_data %>% filter(name == !!name)
+  p <- add_trace(
+    p,
+    x = name_data$year,
+    y = name_data$prop,
+    type = 'scatter',
+    mode = 'lines',
+    name = name,
+    visible = name == "Mary")
+}
+p <- layout(p,
+  title = "Popularity of Baby Names Over Time",
+  xaxis = list(title = "Year"),
+  yaxis = list(title = "Proportion"),
+  updatemenus = list(
+    list(
+      buttons = lapply(selected_names, function(nm) {
+      list(
+          method = "update",
+          args = list(list(visible = selected_names == nm)),
+          label = nm )}), direction = "down", showactive = TRUE))) 
+p
+```
+
+### Part C
+
+``` {r}
+# Ensure 'births' is numeric and 'date' is a proper Date object
+births_clean <- births %>%
+  mutate(
+    date = as.Date(date),
+    births = as.numeric(births)) %>%
+  filter(!is.na(date), !is.na(births))
+births_monthly <- births_clean %>%
+  mutate(month = floor_date(date, "month")) %>%
+  group_by(month) %>%
+  summarize(avg_births = mean(births))
+ggplot(births_monthly, aes(x = month, y = avg_births)) +
+  geom_line(color = "steelblue") +
+  geom_smooth(se = FALSE, color = "darkred") +
+  labs(title = "Average Monthly U.S. Births (2000–2014)",
+       x = "Month", y = "Average Births per Day") +
+  theme_bw()
+``` 

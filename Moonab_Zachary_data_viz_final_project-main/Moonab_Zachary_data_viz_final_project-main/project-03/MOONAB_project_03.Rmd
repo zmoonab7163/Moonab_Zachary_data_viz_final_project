@@ -1,0 +1,239 @@
+---
+title: "Data Visualization for Exploratory Data Analysis"
+output: 
+  html_document:
+    keep_md: true
+    toc: true
+    toc_float: true
+---
+
+# Data Visualization Project 03
+
+## PART 1: Density Plots
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggridges)
+library(viridis)
+library(lubridate)
+library(dplyr)
+library(tidytext)
+
+weather_tpa <- read_csv("https://raw.githubusercontent.com/aalhamadani/datasets/master/tpa_weather_2022.csv")
+# random sample 
+sample_n(weather_tpa, 4)
+```
+
+Using the 2022 data: 
+
+(a) Create a plot like the one below:
+
+```{r, echo = FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("https://raw.githubusercontent.com/aalhamadani/dataviz_final_project/main/figures/tpa_max_temps_facet.png")
+```
+``` {r}
+# Preprocess data with full month labels in order
+tpa_clean <- weather_tpa %>%
+  unite("doy", year, month, day, sep = "-") %>%
+  mutate(
+    doy = ymd(doy),
+    max_temp = as.double(max_temp),
+    month_label = factor(month(doy, label = TRUE, abbr = FALSE), levels = month.name)
+  )
+
+# Final plot
+ggplot(tpa_clean, aes(x = max_temp, fill = month_label)) +
+  geom_histogram(binwidth = 3) +
+  facet_wrap(~ month_label, ncol = 4) +
+  labs(
+    x = "Maximum temperatures",
+    y = "Number of Days"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    # Facet headers
+    strip.background = element_rect(fill = "grey85", color = "black"),
+    strip.text = element_text(face = "plain", size = 11),
+
+    # Panel border around each facet
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+
+    # Grid lines: horizontal and vertical (both active)
+    panel.grid.major.x = element_line(color = "gray85", size = 0.3),
+    panel.grid.major.y = element_line(color = "gray85", size = 0.3),
+    panel.grid.minor = element_blank(),
+
+    # Axis styling
+    axis.title = element_text(size = 13),
+    axis.text = element_text(size = 11),
+    axis.ticks = element_line(color = "black", size = 0.3),
+    legend.position = "none"
+
+  )
+
+```
+(b) Create a plot like the one below:
+
+```{r, echo = FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("https://raw.githubusercontent.com/aalhamadani/dataviz_final_project/main/figures/tpa_max_temps_density.png")
+```
+
+``` {r}
+ggplot(weather_tpa, aes(x = max_temp)) +
+  geom_density(kernel = "gaussian", bw = 0.5, fill = "grey50", size = .8) +
+  labs(x = "Maximum Temperature",
+       y = "density") +
+  theme_minimal()
+```
+(c) Create a plot like the one below:
+
+```{r, echo = FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("https://raw.githubusercontent.com/aalhamadani/dataviz_final_project/main/figures/tpa_max_temps_density_facet.png")
+```
+
+``` {r}
+ggplot(weather_tpa, aes(x = max_temp, fill = factor(month))) +
+  geom_density() +
+  facet_wrap(~ factor(month, labels = month.name), ncol = 3) +
+  labs(
+    title = "TPA 2022: Monthly Density of Max Temps",
+    x = "Max Daily Temperature (°F)",
+    y = "Density"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    strip.background = element_rect(fill = "grey90", color = "black"),
+    strip.text = element_text(size = 11),
+    panel.border = element_rect(color = "black", fill = NA),
+    panel.grid.major = element_line(color = "gray85", size = 0.3),
+    axis.title = element_text(size = 13),
+    axis.text = element_text(size = 11),
+    axis.ticks = element_line(color = "black", size = 0.3),
+    legend.position = "none"  # optional
+  )
+```
+
+(d) Generate a plot like the chart below:
+
+
+```{r, echo = FALSE, out.width="80%", fig.align='center'}
+knitr::include_graphics("https://raw.githubusercontent.com/aalhamadani/dataviz_final_project/main/figures/tpa_max_temps_ridges_plasma.png")
+```
+
+``` {r}
+tpa_clean <- weather_tpa %>%
+  unite("doy", year, month, day, sep = "-") %>%
+  mutate(
+    doy = ymd(doy),
+    max_temp = as.double(max_temp),
+    month_label = factor(month(doy, label = TRUE, abbr = FALSE), levels = month.name)
+  )
+
+# Ridgeline plot with correct legend title
+ggplot(tpa_clean, aes(x = max_temp, y = month_label, fill = stat(x))) +
+  geom_density_ridges_gradient(
+    scale = 1.1,
+    quantile_lines = TRUE,
+    quantiles = 2,
+    rel_min_height = 0.01,
+    color = "black",
+    size = 0.3
+  ) +
+  scale_fill_viridis_c(
+    option = "plasma",
+    name = "Max Temp (°F)") +
+  labs(   x = "Maximum temperature (in Fahrenheit degrees)",
+    y = "Month"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    strip.background = element_rect(fill = "grey85", color = "black"),
+    strip.text = element_text(size = 11),
+    panel.grid.major = element_line(color = "gray85", size = 0.3),
+    panel.grid.minor = element_blank(),
+    axis.title = element_text(size = 13),
+    axis.text = element_text(size = 11),
+    axis.ticks = element_line(color = "black", size = 0.3)
+  )
+
+```
+
+(e) Create a plot of your choice that uses the attribute for precipitation _(values of -99.9 for temperature or -99.99 for precipitation represent missing data)_.
+
+``` {r}
+
+precip_summary <- weather_tpa %>%
+  filter(precipitation != -99.99) %>%
+  mutate(
+    month = as.numeric(month),  # 🛠️ Ensure month is numeric
+    month_label = factor(month, levels = 1:12, labels = month.name)
+  ) %>%
+  group_by(month_label) %>%
+  summarise(
+    total_precip = sum(precipitation, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(precip_summary, aes(x = month_label, y = total_precip, fill = month_label)) +
+  geom_col() +
+  scale_fill_viridis_d(option = "plasma", guide = "none") +
+  labs(
+    title = "TPA 2022: Total Monthly Precipitation",
+    x = "Month",
+    y = "Total Precipitation (inches)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+    panel.grid.major = element_line(color = "gray85", size = 0.3),
+    panel.grid.minor = element_blank(),
+    axis.title = element_text(size = 13),
+    axis.text = element_text(size = 8),
+    axis.ticks = element_line(color = "black", size = 0.3)
+  )
+
+
+```
+
+## PART 2: Most Common Bigrams
+
+### Option (A): Visualizing Text Data
+
+``` {r}
+# Load the dataset
+lyrics <- read_csv("https://raw.githubusercontent.com/aalhamadani/dataviz_final_project/main/data/BB_top100_2015.csv")
+
+
+# Basic bigram creation (no aggressive filtering yet)
+bigram_counts <- lyrics %>%
+  unnest_tokens(bigram, Lyrics, token = "ngrams", n = 2) %>%
+  count(bigram, sort = TRUE)
+
+# View top rows to verify it's not empty
+print(head(bigram_counts, 10))
+
+# Take the top 15 bigrams only
+top_bigrams <- bigram_counts %>%
+  slice_max(n, n = 15)
+
+# Plot
+ggplot(top_bigrams, aes(x = reorder(bigram, n), y = n, fill = n)) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_viridis_c(option = "plasma", guide = "none") +
+  labs(
+    title = "Most Common Bigrams in Billboard Top 100 Lyrics (2015)",
+    x = "Bigram",
+    y = "Frequency"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.title = element_text(size = 13),
+    axis.text = element_text(size = 11),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+    panel.grid.major = element_line(color = "gray85", size = 0.3)
+  )
+
+
+```
+
+
