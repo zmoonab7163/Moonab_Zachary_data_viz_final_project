@@ -15,7 +15,7 @@ car design impacts fuel consumption.
 
 **Sample data visualization:** 
 
-![](figures/fuel_effiency.png)
+![](fuel_effiency.png)
 
 ## Project 02
 
@@ -32,7 +32,7 @@ data more understandable. Find the code and report in the `project_02/` folder.
 
 **Sample data visualization:** 
 
-![](figures/florida_lakes.png)
+![](florida_lakes.png)
 
 ## Project 03
 
@@ -55,7 +55,7 @@ helped me strengthen my ability to clean, transform, and present data clearly us
 
 **Sample data visualization:** 
 
-![](figures/common_bigrams.png)
+![](common_bigrams.png)
 
 ### Moving Forward
 
